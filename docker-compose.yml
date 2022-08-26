@@ -1,0 +1,32 @@
+version: '3'
+
+services:
+  customer_resource_postgres:
+    image: postgres:latest
+    environment:
+      POSTGRES_DB: customer
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: customer@admin
+    ports:
+      - 5432:5432
+    restart: always
+    container_name: customer_resource_database
+    networks:
+      - customer_resource_network
+
+  customer_resource_api:
+    build:
+      dockerfile: Dockerfile
+      context: .
+    image: markswell/customer_resource_api:v1.0.0
+    ports:
+      - 8081:8081
+    container_name: customer_resource_api
+    networks:
+      - customer_resource_network
+    depends_on:
+      -   customer_resource_postgres
+
+networks:
+  customer_resource_network:
+    name: customer_resource_network
