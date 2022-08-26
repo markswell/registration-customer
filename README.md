@@ -5,6 +5,7 @@
 
 * A actual version of docker
 * An actual version of docker-compose
+* A PostgreSQL (in prod or dev)
 
 ## How to use
 
