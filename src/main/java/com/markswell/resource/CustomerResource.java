@@ -7,6 +7,7 @@ import com.markswell.dto.CustomerResponse;
 import org.springframework.data.domain.Page;
 import com.markswell.service.CustomerService;
 import io.swagger.v3.oas.annotations.Operation;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.data.domain.PageRequest;
@@ -81,8 +82,8 @@ public class CustomerResource {
         return ResponseEntity.status(NO_CONTENT).build();
     }
 
-    private static PageRequest getPage(Integer page, Integer size) {
-        if(isNull(page) || isNull(page)) {
+    private static Pageable getPage(Integer page, Integer size) {
+        if(isNull(page) || isNull(page) || page < 0 || size < 0) {
             return PageRequest.of(0, 20);
         }
         return PageRequest.of(page, size);

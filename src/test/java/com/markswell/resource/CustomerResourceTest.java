@@ -1,5 +1,6 @@
 package com.markswell.resource;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import org.junit.jupiter.api.Test;
 import com.markswell.model.Customer;
 import org.junit.jupiter.api.BeforeEach;
@@ -14,11 +15,12 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import java.util.Map;
+import java.util.*;
 import java.time.LocalDate;
 
-import static org.hamcrest.Matchers.*;
 import static io.restassured.RestAssured.given;
+import static org.hamcrest.Matchers.hasItems;
+import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.*;
 import static io.restassured.http.ContentType.JSON;
 
@@ -82,7 +84,9 @@ class CustomerResourceTest {
                 .accept(JSON)
                 .when()
                 .get()
-                .then().extract().asString();
+                .then()
+                .extract()
+                .asString();
         var customerResponse = objectMapper.readValue(response, CustomerResponse.class);
 
         assertEquals("customer_1", customerResponse.getName());
