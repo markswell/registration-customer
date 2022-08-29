@@ -45,7 +45,7 @@ public class CustomerResource {
     @Operation(description = "Find all customers with his name matchs to pattern by pages")
     public ResponseEntity<Page<CustomerResponse>> findByName(@PathVariable String name,
                                                              @PathParam("page") @ApiParam(name = "page") Integer page,
-                                                             @PathParam("size") @ApiParam(name = "page") Integer size) {
+                                                             @PathParam("size") @ApiParam(name = "size") Integer size) {
         return ResponseEntity.ok(customerService.findByName(name, getPage(page, size)));
     }
 
@@ -53,7 +53,7 @@ public class CustomerResource {
     @Operation(description = "Find all customers with his born day matchs to pattern by pages")
     public ResponseEntity<Page<CustomerResponse>> findByBorn(@PathVariable String born,
                                                              @PathParam("page") @ApiParam(name = "page") Integer page,
-                                                             @PathParam("size") @ApiParam(name = "page") Integer size) {
+                                                             @PathParam("size") @ApiParam(name = "size") Integer size) {
         return ResponseEntity.ok(customerService.findByBorn(LocalDate.parse(born), getPage(page, size)));
     }
 

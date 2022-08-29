@@ -1,9 +1,10 @@
 package com.markswell.resource;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import org.junit.jupiter.api.Test;
 import com.markswell.model.Customer;
 import org.junit.jupiter.api.BeforeEach;
+import io.restassured.response.Response;
+import com.markswell.dto.ResponseBodyDTO;
 import org.junit.jupiter.api.DisplayName;
 import com.markswell.dto.CustomerResponse;
 import com.markswell.handle.ResponseError;
@@ -12,17 +13,18 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.boot.test.context.SpringBootTest;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import com.fasterxml.jackson.databind.introspect.VisibilityChecker;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.util.*;
 import java.time.LocalDate;
 
 import static io.restassured.RestAssured.given;
-import static org.hamcrest.Matchers.hasItems;
-import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.*;
 import static io.restassured.http.ContentType.JSON;
+import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.ANY;
 
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -42,6 +44,8 @@ class CustomerResourceTest {
                 .born(LocalDate.parse("2000-01-01"))
                 .build();
         objectMapper = new ObjectMapper();
+        objectMapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+        objectMapper.setVisibility(VisibilityChecker.Std.defaultInstance().withFieldVisibility(ANY));
     }
 
     @Test
@@ -59,18 +63,22 @@ class CustomerResourceTest {
 
     @Test
     @DisplayName("Teste GET URL /api/customer?size=5&page=0")
-    public void findAllSizeTest() {
-        given()
-            .basePath("/api/customer")
-            .queryParam("size", 5)
-            .queryParam("page", 0)
-            .port(port)
-            .accept(JSON)
-        .when()
-            .get()
-        .then()
-            .body("content", hasSize(5))
-            .body("content.name", hasItems("customer_1", "customer_2", "customer_3", "customer_4", "customer_5"));
+    public void findAllSizeTest() throws JsonProcessingException {
+        Response response = given()
+                .basePath("/api/customer")
+                .queryParam("size", 5)
+                .queryParam("page", 0)
+                .port(port)
+                .accept(JSON)
+                .when()
+                .get()
+                .then().extract().response();
+
+        var customerResponse = objectMapper.readValue(response.getBody().asString(), ResponseBodyDTO.class);
+
+        assertEquals(5, customerResponse.getContent().size());
+        assertEquals("customer_1", customerResponse.getContent().get(0).getName());
+
     }
 
     @Test
@@ -88,7 +96,6 @@ class CustomerResourceTest {
                 .extract()
                 .asString();
         var customerResponse = objectMapper.readValue(response, CustomerResponse.class);
-
         assertEquals("customer_1", customerResponse.getName());
     }
 
@@ -105,7 +112,7 @@ class CustomerResourceTest {
                 .then().statusCode(201).extract().asString();
 
         var customerResponse = objectMapper.readValue(response, CustomerResponse.class);
-        assertEquals(10l, customerResponse.getId());
+        assertEquals(10L, customerResponse.getId());
 
     }
 
@@ -122,7 +129,7 @@ class CustomerResourceTest {
                 .then().statusCode(201).extract().asString();
 
         var customerResponse = objectMapper.readValue(response, CustomerResponse.class);
-        assertEquals(2l, customerResponse.getId());
+        assertEquals(2L, customerResponse.getId());
         assertEquals("customer_teste", customerResponse.getName());
     }
 
@@ -143,13 +150,13 @@ class CustomerResourceTest {
                                 .asString();
 
         var customerResponse = objectMapper.readValue(response, CustomerResponse.class);
-        assertEquals(2l, customerResponse.getId());
+        assertEquals(2L, customerResponse.getId());
         assertEquals("customer_patch", customerResponse.getName());
     }
 
     @Test
     @DisplayName("Teste DELETE URL /api/customer/{id}")
-    public void deleteRequestTest() throws JsonProcessingException {
+    public void deleteRequestTest() {
              given()
                 .basePath("/api/customer/1")
                 .port(port)
@@ -161,7 +168,7 @@ class CustomerResourceTest {
 
     @Test
     @DisplayName("Teste DELETE URL /api/customer/{id}")
-    public void deleteWithInexistentIdRequestTest() throws JsonProcessingException {
+    public void deleteWithInexistentIdRequestTest() {
         given()
                 .basePath("/api/customer/50")
                 .port(port)

@@ -1,26 +1,30 @@
 package com.markswell.service;
 
-import com.markswell.exception.NotFoundException;
 import com.markswell.model.Customer;
+import com.markswell.resource.CustomerResource;
 import lombok.RequiredArgsConstructor;
 import com.markswell.mapper.CustomerMap;
 import com.markswell.dto.CustomerResponse;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.Page;
+import org.springframework.hateoas.Link;
 import org.springframework.stereotype.Service;
-import org.springframework.util.ReflectionUtils;
 import org.springframework.data.domain.Pageable;
+import org.springframework.util.ReflectionUtils;
 import org.springframework.data.domain.PageImpl;
+import com.markswell.exception.NotFoundException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.markswell.repository.customer.CustomerRepository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Map;
 import java.util.List;
-import java.time.LocalDate;
-import java.lang.reflect.Field;
 import java.util.Objects;
 import java.util.Optional;
+import java.time.LocalDate;
+import java.lang.reflect.Field;
+
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 
 @Service
 @RequiredArgsConstructor
@@ -50,7 +54,7 @@ public class CustomerService {
     @Transactional
     public CustomerResponse save(Customer customer) {
         Customer response = repository.save(customer);
-        return customerMap.customerToCustomerResponse(response);
+        return getCustomerResponse(response);
     }
 
     @Transactional
@@ -58,7 +62,7 @@ public class CustomerService {
         Customer customerReturn = findOne(id);
         validateEmpty(customerReturn);
         BeanUtils.copyProperties(customer, customerReturn, "id");
-        return customerMap.customerToCustomerResponse(customerReturn);
+        return getCustomerResponse(customerReturn);
     }
 
     @Transactional
@@ -75,7 +79,7 @@ public class CustomerService {
             ReflectionUtils.setField(field, customerReturn, fieldValue);
         });
 
-        return customerMap.customerToCustomerResponse(customerReturn);
+        return getCustomerResponse(customerReturn);
     }
 
     @Transactional
@@ -87,7 +91,7 @@ public class CustomerService {
     public CustomerResponse findById(Long id) {
         Customer customer = findOne(id);
         validateEmpty(customer);
-        return customerMap.customerToCustomerResponse(customer);
+        return getCustomerResponse(customer);
     }
 
     private Customer findOne(long id) {
@@ -99,8 +103,8 @@ public class CustomerService {
     }
 
     private PageImpl<CustomerResponse> convertCustomerPageToCustomerResponsePage(Pageable page, Page<Customer> customers) {
-        List<CustomerResponse> customerResponses = customers.stream().map(c -> customerMap.customerToCustomerResponse(c)).toList();
-        return new PageImpl<CustomerResponse>(customerResponses, page, customers.getTotalPages());
+        List<CustomerResponse> customerResponses = customers.stream().map(c -> getCustomerResponse(c)).toList();
+        return new PageImpl<>(customerResponses, page, customers.getTotalPages());
     }
 
     private static void validateEmpty(Page<Customer> customers) {
@@ -114,4 +118,12 @@ public class CustomerService {
             throw new NotFoundException();
         }
     }
+
+    private CustomerResponse getCustomerResponse(Customer c) {
+        CustomerResponse customerResponse = customerMap.customerToCustomerResponse(c);
+        Link link = linkTo(CustomerResource.class).slash(customerResponse.getId()).withSelfRel();
+        customerResponse.add(link);
+        return customerResponse;
+    }
+
 }
